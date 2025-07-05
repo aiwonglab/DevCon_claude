@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv:*)",
+      "Bash(pixi run:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "mcp__ide__executeCode",
+      "Bash(touch:*)",
+      "Bash(chmod:*)",
+      "Bash(uv run:*)",
+      "Bash(python:*)"
+    ],
+    "deny": []
+  }
+}
