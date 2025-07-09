@@ -1,4 +1,4 @@
-FROM NODE:18
+FROM node:18
 # FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 ARG TZ
