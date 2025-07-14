@@ -1,5 +1,5 @@
 {
-  "name": "Claude Code Sandbox - Node on WSL",
+  "name": "Claude Code Sandbox - nvidia/cuda:12.4.1 on Linux, GPU 0",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -8,7 +8,7 @@
   },
   "runArgs": [
     // "--gpus=all", // Enable GPU support
-    // "--device=nvidia.com/gpu=0",
+    "--device=nvidia.com/gpu=0",
     // "--shm-size=2g", // Increase shared memory size for better performance
     // Uncomment the line below if you need a larger shared memory size
     // This can be useful for applications that require more memory, such as large models or datasets
@@ -69,6 +69,5 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  // "postCreateCommand": "sudo /bin/bash /usr/local/bin/postCreateCommand.sh"
   "postCreateCommand": "sudo /usr/local/bin/postCreateCommand.sh"
 }

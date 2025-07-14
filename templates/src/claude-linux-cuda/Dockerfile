@@ -1,5 +1,5 @@
-FROM node:18
-# FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+# FROM node:18
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 ARG TZ
 ENV TZ="$TZ"
@@ -39,10 +39,10 @@ RUN chmod -R 755 /usr/local/share/zsh/ && \
 # Add ZSH_DISABLE_COMPFIX to environment
 ENV ZSH_DISABLE_COMPFIX=true
 
-# # uncomment the following lines if you're not using a node:18 image
+# # uncomment the following lines if you're not using a node:18  (like with NVidia )
 # # Create node user (matching the official Node.js image)
-# RUN groupadd --gid 1000 node && \
-#   useradd --uid 1000 --gid node --shell /bin/bash --create-home node
+RUN groupadd --gid 1000 node && \
+  useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
 # Create directories and set permissions BEFORE switching to node user
 RUN mkdir -p /usr/local/share/npm-global && \
@@ -94,8 +94,8 @@ RUN sed -i 's/\r$//' /usr/local/bin/init-firewall.sh && \
 RUN sed -i 's/\r$//' /usr/local/bin/postCreateCommand.sh && \
     chmod +x /usr/local/bin/postCreateCommand.sh
 
-RUN chmod +x /usr/local/bin/init-firewall.sh 
-RUN chmod +x /usr/local/bin/postCreateCommand.sh
+# RUN chmod +x /usr/local/bin/init-firewall.sh 
+# RUN chmod +x /usr/local/bin/postCreateCommand.sh
 
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
