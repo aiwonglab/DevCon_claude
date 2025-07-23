@@ -1,5 +1,5 @@
 {
-  "name": "Claude Code Sandbox - nvidia/cuda:12.4.1 on Linux, GPU 0",
+  "name": "Claude+CUDA on Linux, GPU 0",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -54,6 +54,7 @@
   },
   "remoteUser": "node",
   "mounts": [
+    "source=/mnt/dudom_pulm/Pulm_Share/Wong/labs/wonglab/data,target=/workspace/data/pulm_share_wonglab/data,type=bind,consistency=delegated",
     "source=claude-code-bashhistory,target=/commandhistory,type=volume",
     "source=claude-code-config,target=/home/node/.claude,type=volume"
   ],
