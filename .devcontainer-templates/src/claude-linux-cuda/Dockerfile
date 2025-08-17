@@ -117,13 +117,14 @@ ENV PATH=$PATH:/usr/local/share/npm-global/bin
 ENV SHELL=/bin/zsh
 
 # Simple zsh setup without problematic sourcing
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.0/zsh-in-docker.sh)" -- \
+RUN rm -f /home/node/.zshrc && \
+    sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.0/zsh-in-docker.sh)" -- \
   -p git \
   -a 'export ZSH_DISABLE_COMPFIX=true' \
   -a 'export PROMPT_COMMAND="history -a"' \
   -a 'export HISTFILE=/commandhistory/.bash_history' \
   -x
-
+  
 # Install pixi and uv
 RUN curl -fsSL https://pixi.sh/install.sh | bash && \
   curl -LsSf https://astral.sh/uv/install.sh | sh && \

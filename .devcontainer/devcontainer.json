@@ -1,5 +1,5 @@
 {
-  "name": "Claude Code Sandbox - Node on WSL",
+  "name": "Claude Code Sandbox - Node on Linux, no GPU",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
