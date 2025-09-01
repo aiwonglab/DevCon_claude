@@ -22,6 +22,7 @@ RUN apt update && apt install -y less \
   aggregate \
   nano \
   jq \
+  tmux \
   wget \
   curl
 

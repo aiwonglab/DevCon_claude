@@ -108,7 +108,23 @@ for domain in \
     "pixi.sh" \
     "astral.sh" \
     "platform.openai.com" \
+    "ports.ubuntu.com" \
+    "archive.ubuntu.com" \
+    "ppa.launchpadcontent.net" \
+    "download.pytorch.org" \
+    "huggingface.co" \
+    "hf.co" \
+    "cdn-lfs.huggingface.co" \
+    "cdn-lfs.hf.co " \
+    "cdn-lfs-us-1.hf.co" \
+    "cdn-lfs-eu-1.hf.co" \
+    "xethub.hf.co" \
+    "cas-server.xethub.hf.co" \
+    "cas-bridge.xethub.hf.co" \
+    "transfer.xethub.hf.co" \
     "api.openai.com" \
+    "ollama.com" \
+    "registry.ollama.ai" \
     "pypi.org" \
     "pypi.python.org" \
     "pythonhosted.org" \
