@@ -20,6 +20,7 @@ fi
 
 # Navigate to the cloned repository
 cd "${FOLDER_NAME}" || exit 1
+echo "Current directory: $(pwd)"
 
 # Create .claude directory if it doesn't exist
 mkdir -p .claude
@@ -50,7 +51,12 @@ mkdir -p data
 # Update devcontainer name if it exists
 if [ -f .devcontainer/devcontainer.json ]; then
     echo "Updating devcontainer name to DCA: ${FOLDER_NAME}..."
-    sed -i "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+    # sed -i "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+    else
+        sed -i "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+    fi
 fi
 
 echo "All repositories cloned successfully!"
