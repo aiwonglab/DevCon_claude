@@ -10,7 +10,9 @@
       "Bash(touch:*)",
       "Bash(chmod:*)",
       "Bash(uv run:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

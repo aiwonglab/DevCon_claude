@@ -1,0 +1,10 @@
+# Operating system package repositories
+
+# Ubuntu
+ports.ubuntu.com
+archive.ubuntu.com
+ppa.launchpadcontent.net
+
+# Debian
+deb.debian.org
+deb.map.fastlydns.net

@@ -1,0 +1,24 @@
+# AI/ML service providers
+
+# OpenAI
+platform.openai.com
+api.openai.com
+
+# Ollama
+ollama.com
+registry.ollama.ai
+
+# Hugging Face
+huggingface.co
+hf.co
+cdn-lfs.huggingface.co
+cdn-lfs.hf.co
+cdn-lfs-us-1.hf.co
+cdn-lfs-eu-1.hf.co
+xethub.hf.co
+cas-server.xethub.hf.co
+cas-bridge.xethub.hf.co
+transfer.xethub.hf.co
+
+# PyTorch (for ML models)
+download.pytorch.org

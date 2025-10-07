@@ -1,0 +1,10 @@
+# Core system domains - always required
+# These domains are essential for basic development environment functionality
+
+# Anthropic API (Claude)
+api.anthropic.com
+statsig.anthropic.com
+statsig.com
+
+# Monitoring and logging
+sentry.io

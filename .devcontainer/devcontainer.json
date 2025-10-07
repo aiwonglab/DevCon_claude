@@ -65,7 +65,8 @@
 
     "NODE_OPTIONS": "--max-old-space-size=4096", // Increase Node.js memory limit
     "CLAUDE_CONFIG_DIR": "/home/node/.claude", // Set Claude config directory
-    "POWERLEVEL9K_DISABLE_GITSTATUS": "true" // Disable git status in Powerlevel9k
+    "POWERLEVEL9K_DISABLE_GITSTATUS": "true", // Disable git status in Powerlevel9k
+    "FIREWALL_PROFILE": "ai-dev" // Firewall profile: minimal, ai-dev, cloud-dev, or full
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",

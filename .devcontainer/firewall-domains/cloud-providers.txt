@@ -1,0 +1,15 @@
+# Cloud provider APIs and services
+
+# Google Cloud Platform
+bigquery.googleapis.com
+www.googleapis.com
+googleapis.com
+accounts.google.com
+oauth2.googleapis.com
+storage.googleapis.com
+cloudresourcemanager.googleapis.com
+iam.googleapis.com
+serviceusage.googleapis.com
+cloudbilling.googleapis.com
+console.cloud.google.com
+cloud.google.com

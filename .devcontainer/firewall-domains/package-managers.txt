@@ -1,0 +1,16 @@
+# Package manager registries
+
+# npm
+registry.npmjs.org
+
+# Python/PyPI
+pypi.org
+pypi.python.org
+pythonhosted.org
+files.pythonhosted.org
+
+# UV package manager
+astral.sh
+
+# Pixi package manager
+pixi.sh
