@@ -27,21 +27,33 @@ mkdir -p .claude
 
 # Clone agents repository
 echo "Cloning agents repository to .claude/agents..."
-git clone https://github.com/wshobson/agents .claude/agents
+git clone https://github.com/aiwonglab/claude_code_agents .claude/agents
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to clone agents repository"
     exit 1
 fi
 
+# Set up upstream remote for agents
+echo "Setting up upstream remote for agents..."
+cd .claude/agents
+git remote add upstream https://github.com/wshobson/agents
+cd ../..
+
 # Clone commands repository
 echo "Cloning commands repository to .claude/commands..."
-git clone https://github.com/wshobson/commands .claude/commands
+git clone https://github.com/aiwonglab/claude_code_commands .claude/commands
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to clone commands repository"
     exit 1
 fi
+
+# Set up upstream remote for commands
+echo "Setting up upstream remote for commands..."
+cd .claude/commands
+git remote add upstream https://github.com/wshobson/commands
+cd ../..
 
 # Create src subfolder
 echo "Creating src subfolder..."
