@@ -60,7 +60,7 @@ RUN echo 'export ZSH_DISABLE_COMPFIX=true' > /home/node/.zshrc && \
   echo 'export PROMPT_COMMAND="history -a"' >> /home/node/.zshrc && \
   echo 'export HISTFILE=/commandhistory/.bash_history' >> /home/node/.zshrc && \
   echo 'export PATH=$PATH:/usr/local/share/npm-global/bin' >> /home/node/.zshrc && \
-  echo 'export PATH="/home/node/.pixi/bin:/home/node/.cargo/bin:$PATH"' >> /home/node/.zshrc && \
+  echo 'export PATH="/home/node/.cargo/bin:$PATH"' >> /home/node/.zshrc && \
   chown node:node /home/node/.zshrc
 
 ARG USERNAME=node
@@ -122,8 +122,7 @@ RUN rm -f /home/node/.zshrc && \
   -a 'export PROMPT_COMMAND="history -a"' \
   -a 'export HISTFILE=/commandhistory/.bash_history' \
   -x
-# Install pixi and uv
-RUN curl -fsSL https://pixi.sh/install.sh | bash && \
-  curl -LsSf https://astral.sh/uv/install.sh | sh && \
-  echo 'export PATH="/home/node/.pixi/bin:/home/node/.cargo/bin:$PATH"' >> /home/node/.bashrc && \
-  echo 'export PATH="/home/node/.pixi/bin:/home/node/.cargo/bin:$PATH"' >> /home/node/.zshrc
+# Install uv (Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+  echo 'export PATH="/home/node/.cargo/bin:$PATH"' >> /home/node/.bashrc && \
+  echo 'export PATH="/home/node/.cargo/bin:$PATH"' >> /home/node/.zshrc
