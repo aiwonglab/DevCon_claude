@@ -15,11 +15,27 @@ wheels/
 *.lock
 
 # Output files and logs
-output/
+output/*
+!output/.gitkeep
 *.log
+
+# Research source code (independent repos)
+src/*
+!src/.gitkeep
+
+# Data directory (not tracked)
+data/*
+!data/.gitkeep
+
+# Results directory (not tracked)
+results/*
+!results/.gitkeep
 
 # # Claude Code configuration
 # .claude/
+
+.claude/agents
+.claude/commands
 
 # # Development containers
 # .devcontainer/
