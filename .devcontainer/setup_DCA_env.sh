@@ -60,14 +60,18 @@ echo "Creating src subfolder..."
 mkdir -p src
 mkdir -p data
 
-# Update devcontainer name if it exists
+# Update devcontainer name and mounts if it exists
 if [ -f .devcontainer/devcontainer.json ]; then
     echo "Updating devcontainer name to DCA: ${FOLDER_NAME}..."
-    # sed -i "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+    echo "Updating Claude Code mount names with suffix: ${FOLDER_NAME}..."
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+        sed -i '' "s/\"source=claude-code-bashhistory,/\"source=claude-code-bashhistory-${FOLDER_NAME},/" .devcontainer/devcontainer.json
+        sed -i '' "s/\"source=claude-code-config,/\"source=claude-code-config-${FOLDER_NAME},/" .devcontainer/devcontainer.json
     else
         sed -i "s/\"name\": \".*\"/\"name\": \"DCA: ${FOLDER_NAME}\"/" .devcontainer/devcontainer.json
+        sed -i "s/\"source=claude-code-bashhistory,/\"source=claude-code-bashhistory-${FOLDER_NAME},/" .devcontainer/devcontainer.json
+        sed -i "s/\"source=claude-code-config,/\"source=claude-code-config-${FOLDER_NAME},/" .devcontainer/devcontainer.json
     fi
 fi
 
