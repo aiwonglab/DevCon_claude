@@ -31,11 +31,11 @@ data/*
 results/*
 !results/.gitkeep
 
-# # Claude Code configuration
-# .claude/
-
-.claude/agents
-.claude/commands
+# Claude Code upstream repos (git clones) and curated symlinks
+.claude/_upstream/
+.claude/agents/
+.claude/commands/*
+!.claude/commands/*.md
 
 # # Development containers
 # .devcontainer/
