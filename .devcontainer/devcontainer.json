@@ -1,5 +1,5 @@
 {
-  "name": "Claude Code Sandbox - Node on Linux, no GPU",
+  "name": "DevCon Template - do not use directly, run setup_project.sh",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {

@@ -2,7 +2,7 @@
 model: claude-sonnet-4-6
 ---
 
-# Setup Template Downstream
+# Sync Template Updates and Manage Sub-repos
 
 Set up a workspace that tracks an upstream DevCon template repo while pushing project-specific code to its own repo. The workspace receives template infrastructure updates (`.devcontainer/`, `.claude/`, `CLAUDE.md` skeleton) and writes project code (`src/`, `output/`, `data/`) back to its own origin.
 
@@ -200,5 +200,5 @@ When a user wants to create a brand new project from DevCon_claude:
 4. Run this skill to set up sub-repos and verify everything
 5. Start coding in `src/`
 
-The `setup_DCA_env.sh` script in `.devcontainer/` handles the initial clone + sub-repo setup.
+The `setup_project.sh` script in `.devcontainer/` handles the initial clone + sub-repo setup.
 This skill handles ongoing maintenance and template syncing after that.

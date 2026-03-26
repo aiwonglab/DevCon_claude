@@ -1,26 +1,48 @@
-# DevCon_claude
+# DevCon Template
 
-Development container for Claude Code with infrastructure management and research project separation.
+Devcontainer template for creating project-specific development environments with Claude Code.
+
+> **This is the template repo.** You don't work in this repo directly. Instead, use `setup_project.sh` to create project instances like `DCA_praxis`, `DCA_livelingual`, etc. Each instance is its own GitHub repo that can pull template updates via `git pull upstream master`.
 
 Based on [Anthropic's Claude Code example](https://github.com/anthropics/claude-code/tree/main).
 
-## Quick Start
-
-### For New Projects
+## Creating a New Project Instance
 
 ```bash
-bash .devcontainer/setup_DCA_env.sh my-project-name
+bash .devcontainer/setup_project.sh <project-name> [--org <org>] [--dry-run]
 ```
 
-This creates a complete workspace with:
-- Claude Code agents (from `aiwonglab/claude_code_agents`)
-- Claude Code commands (from `aiwonglab/claude_code_commands`)
-- Pre-configured directory structure for research work
-- Upstream remotes to sync with `wshobson` updates
+This clones DevCon_claude, then configures it as a standalone instance:
 
-### For Existing Projects
+- Creates GitHub repo `<org>/DCA_<project>` (private)
+- Sets container name to `DCA: <project>` with isolated volumes
+- Optionally adds a bind mount for host project source
+- Clones Claude Code agents and commands with upstream tracking
+- Sets git remotes: `origin` → instance repo, `upstream` → this template
+- Commits and pushes the initial configuration
 
-Migrate existing DevCon workspaces to the new structure:
+### Examples
+
+```bash
+# Create DCA_praxis with defaults (org: aiwonglab)
+bash .devcontainer/setup_project.sh praxis
+
+# Different org
+bash .devcontainer/setup_project.sh praxis --org myorg
+
+# Preview what would happen
+bash .devcontainer/setup_project.sh praxis --dry-run
+```
+
+### Pulling Template Updates into an Instance
+
+```bash
+cd DCA_praxis/
+git fetch upstream master
+git merge upstream/master
+```
+
+### For Existing Projects (Migration)
 
 ```bash
 cd /path/to/existing/workspace
@@ -33,17 +55,20 @@ See [MIGRATION.md](.devcontainer/MIGRATION.md) for details.
 
 ```
 /workspace/
-├── .devcontainer/          # Container configuration
-│   ├── setup_DCA_env.sh   # Setup script for new projects
-│   ├── migrate_to_aiwonglab.sh  # Migration script
-│   └── MIGRATION.md       # Migration documentation
+├── .devcontainer/
+│   ├── setup_project.sh        # Instance creation script
+│   ├── migrate_to_aiwonglab.sh # Migration script for legacy setups
+│   └── MIGRATION.md
 ├── .claude/
-│   ├── agents/            # Git submodule: claude_code_agents
-│   └── commands/          # Git submodule: claude_code_commands
-├── src/                   # Your research code (gitignored)
-├── data/                  # Your data files (gitignored)
+│   ├── _upstream/         # Git-ignored; agent/command sub-repo clones
+│   │   ├── agents-repo/   # Clone of claude_code_agents
+│   │   └── commands-repo/ # Clone of claude_code_commands
+│   ├── agents/            # Symlink → _upstream/agents-repo
+│   └── commands/          # Symlink → _upstream/commands-repo
+├── src/                   # Project source (gitignored, bind-mounted)
+├── data/                  # Data files (gitignored)
 ├── output/                # Generated outputs (gitignored)
-└── results/               # Research results (gitignored)
+└── results/               # Results (gitignored)
 ```
 
 ## Design Philosophy
@@ -75,7 +100,7 @@ Sync upstream updates:
 
 Or manually:
 ```bash
-cd .claude/agents
+cd .claude/_upstream/agents-repo
 git fetch upstream
 git merge upstream/main
 git push origin main
@@ -135,33 +160,20 @@ Templates automatically run:
 
 ## Workflows
 
-### Initial Setup
+### Creating a New Instance
 
-1. Clone this repo OR run setup script
-2. Open in VS Code with Dev Containers extension
-3. Container builds and initializes automatically
-4. Agents and commands are cloned and configured
-5. Start working in `src/` directory
+1. Run `bash .devcontainer/setup_project.sh <name>`
+2. Open the created `DCA_<name>/` directory in VS Code
+3. Reopen in container (Dev Containers extension)
+4. Start working in `/workspace/src/<name>/`
 
-### Adding Research Projects
+### Pulling Template Updates
 
+From inside an instance:
 ```bash
-cd src/
-git clone https://github.com/yourorg/research-project .
-# OR
-git init
-# Start coding
+git fetch upstream master
+git merge upstream/master
 ```
-
-Your research repo is completely independent of infrastructure.
-
-### Updating Infrastructure
-
-```bash
-git pull origin master  # Update DevCon infrastructure
-```
-
-Research code in `src/` is unaffected.
 
 ### Syncing Agents/Commands
 
