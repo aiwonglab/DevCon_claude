@@ -8,18 +8,29 @@ Based on [Anthropic's Claude Code example](https://github.com/anthropics/claude-
 
 ## Creating a New Project Instance
 
+One-liner (no need to clone the template first):
 ```bash
-bash .devcontainer/setup_project.sh <project-name> [--org <org>] [--dry-run]
+curl -fsSL https://raw.githubusercontent.com/aiwonglab/DevCon_claude/master/.devcontainer/setup_project.sh | bash -s -- <project-name>
+```
+
+Or if you already have the repo cloned:
+```bash
+bash .devcontainer/setup_project.sh <project-name>
 ```
 
 This clones DevCon_claude, then configures it as a standalone instance:
 
-- Creates GitHub repo `<org>/DCA_<project>` (private)
+- Creates GitHub repo `<org>/DCA_<project>` (private, requires `gh`)
 - Sets container name to `DCA: <project>` with isolated volumes
 - Optionally adds a bind mount for host project source
 - Clones Claude Code agents and commands with upstream tracking
 - Sets git remotes: `origin` → instance repo, `upstream` → this template
 - Commits and pushes the initial configuration
+
+If `gh` isn't available, local setup completes and you can add the GitHub repo later:
+```bash
+bash setup_project.sh <project-name> --github-only
+```
 
 ### Examples
 
@@ -27,11 +38,17 @@ This clones DevCon_claude, then configures it as a standalone instance:
 # Create DCA_praxis with defaults (org: aiwonglab)
 bash .devcontainer/setup_project.sh praxis
 
-# Different org
-bash .devcontainer/setup_project.sh praxis --org myorg
+# Non-interactive with bind mount
+bash .devcontainer/setup_project.sh praxis --mount C:/git/praxis
+
+# No bind mount, SSH remotes
+bash .devcontainer/setup_project.sh praxis --no-mount --ssh
 
 # Preview what would happen
 bash .devcontainer/setup_project.sh praxis --dry-run
+
+# Add GitHub repo to an existing instance
+bash .devcontainer/setup_project.sh praxis --github-only
 ```
 
 ### Pulling Template Updates into an Instance
