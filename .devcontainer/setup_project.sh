@@ -97,6 +97,12 @@ if [[ ! "$PROJECT" =~ ^[a-zA-Z0-9_-]+$ ]]; then
     exit 1
 fi
 
+# Strip DCA_ prefix if user included it (e.g. "DCA_praxis" → "praxis")
+if [[ "$PROJECT" == DCA_* ]]; then
+    PROJECT="${PROJECT#DCA_}"
+    warn "Stripped DCA_ prefix — using project name: ${PROJECT}"
+fi
+
 REPO_NAME="DCA_${PROJECT}"
 INSTANCE_REPO="${ORG}/${REPO_NAME}"
 
@@ -234,6 +240,9 @@ if [[ "$MOUNT_MODE" == "path" ]]; then
     info "Bind mount: ${MOUNT_PATH} → /workspace/src/${PROJECT}/"
 elif [[ "$MOUNT_MODE" == "none" ]]; then
     info "Skipping bind mount"
+elif [[ ! -t 0 ]]; then
+    # stdin is not a terminal (e.g. curl | bash) — can't prompt interactively
+    info "Non-interactive mode detected, skipping bind mount (use --mount to set one)"
 else
     echo ""
     echo -e "${CYAN}Bind mount setup${NC}"
@@ -262,7 +271,7 @@ info "Cloning template repo ${TEMPLATE_REPO} into ${REPO_NAME}..."
 run "git clone $(git_url "$TEMPLATE_REPO") '${REPO_NAME}'"
 
 if ! $DRY_RUN; then
-    cd "$REPO_NAME"
+    cd "$REPO_NAME" || { err "Failed to enter ${REPO_NAME}/ — clone may have failed."; exit 1; }
 else
     info "Would cd into ${REPO_NAME}"
 fi
