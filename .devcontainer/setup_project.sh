@@ -26,7 +26,8 @@ Arguments:
                       Must be alphanumeric, hyphens, or underscores only.
 
 Options:
-  --org <org>         GitHub org for the DCA instance repo (default: aiwonglab)
+  --org <org>         GitHub org or username for the instance repo
+                      (auto-detects from gh, or prompts interactively)
   --template <repo>   Template repo to clone (default: aiwonglab/DevCon_claude)
   --agents <repo>     Agents repo (default: wshobson/agents)
   --commands <repo>   Commands repo (default: wshobson/commands)
@@ -51,7 +52,7 @@ EOF
 
 # ─── Parse args ───────────────────────────────────────────────────────────────
 PROJECT=""
-ORG="aiwonglab"
+ORG=""
 TEMPLATE_REPO="aiwonglab/DevCon_claude"
 AGENTS_REPO="wshobson/agents"
 COMMANDS_REPO="wshobson/commands"
@@ -101,6 +102,26 @@ fi
 if [[ "$PROJECT" == DCA_* ]]; then
     PROJECT="${PROJECT#DCA_}"
     warn "Stripped DCA_ prefix — using project name: ${PROJECT}"
+fi
+
+# Default org: detect from gh if available, otherwise prompt
+if [[ -z "$ORG" ]]; then
+    if command -v gh &>/dev/null && gh auth status &>/dev/null; then
+        ORG=$(gh api user --jq .login 2>/dev/null || echo "")
+    fi
+    if [[ -z "$ORG" ]]; then
+        if [[ -t 0 ]]; then
+            read -rp "GitHub org or username for DCA_${PROJECT}: " ORG
+            if [[ -z "$ORG" ]]; then
+                err "Org is required. Use --org <org> or enter one when prompted."
+                exit 1
+            fi
+        else
+            err "No --org specified and cannot detect from gh. Use --org <org>."
+            exit 1
+        fi
+    fi
+    info "Using org: ${ORG}"
 fi
 
 REPO_NAME="DCA_${PROJECT}"
