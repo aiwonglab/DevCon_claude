@@ -7,7 +7,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 info()  { echo -e "${CYAN}[INFO]${NC}  $*"; }
 ok()    { echo -e "${GREEN}[OK]${NC}    $*"; }
@@ -26,7 +26,10 @@ Arguments:
                       Must be alphanumeric, hyphens, or underscores only.
 
 Options:
-  --org <org>         GitHub org (default: aiwonglab)
+  --org <org>         GitHub org for the DCA instance repo (default: aiwonglab)
+  --template <repo>   Template repo to clone (default: aiwonglab/DevCon_claude)
+  --agents <repo>     Agents repo (default: wshobson/agents)
+  --commands <repo>   Commands repo (default: wshobson/commands)
   --mount <path>      Add a bind mount from host path to /workspace/src/<project>
   --no-mount          Skip bind mount (no interactive prompt)
   --ssh               Use SSH URLs for git remotes (default: auto-detect from gh)
@@ -39,9 +42,9 @@ Options:
 Examples:
   bash setup_project.sh praxis
   bash setup_project.sh praxis --mount C:/git/praxis
-  bash setup_project.sh praxis --no-mount --ssh
-  bash setup_project.sh praxis --org myorg --dry-run
-  bash setup_project.sh praxis --github-only          # add GitHub repo later
+  bash setup_project.sh praxis --org other-org --no-mount --ssh
+  bash setup_project.sh praxis --dry-run
+  bash setup_project.sh praxis --github-only
 EOF
     exit 0
 }
@@ -49,6 +52,9 @@ EOF
 # ─── Parse args ───────────────────────────────────────────────────────────────
 PROJECT=""
 ORG="aiwonglab"
+TEMPLATE_REPO="aiwonglab/DevCon_claude"
+AGENTS_REPO="wshobson/agents"
+COMMANDS_REPO="wshobson/commands"
 DRY_RUN=false
 MOUNT_MODE=""       # "", "path", "none"
 MOUNT_PATH=""
@@ -59,6 +65,9 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help) usage ;;
         --org) ORG="$2"; shift 2 ;;
+        --template) TEMPLATE_REPO="$2"; shift 2 ;;
+        --agents) AGENTS_REPO="$2"; shift 2 ;;
+        --commands) COMMANDS_REPO="$2"; shift 2 ;;
         --mount) MOUNT_MODE="path"; MOUNT_PATH="$2"; shift 2 ;;
         --no-mount) MOUNT_MODE="none"; shift ;;
         --ssh) GIT_PROTOCOL="ssh"; shift ;;
@@ -89,11 +98,9 @@ if [[ ! "$PROJECT" =~ ^[a-zA-Z0-9_-]+$ ]]; then
 fi
 
 REPO_NAME="DCA_${PROJECT}"
-TEMPLATE_REPO="${ORG}/DevCon_claude"
 INSTANCE_REPO="${ORG}/${REPO_NAME}"
-TARGET_DIR="${REPO_NAME}"
 
-# ─── Dry-run wrapper ─────────────────────────────────────────────────────────
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 run() {
     if $DRY_RUN; then
         echo -e "${YELLOW}[DRY-RUN]${NC} $*"
@@ -102,9 +109,45 @@ run() {
     fi
 }
 
+# Portable sed -i (macOS requires '' argument)
+detect_os() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
+        Darwin*)               echo "mac" ;;
+        *)                     echo "linux" ;;
+    esac
+}
+
+HOST_OS=$(detect_os)
+
+sedi() {
+    if [[ "$HOST_OS" == "mac" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
+# Clone a repo into .claude/_upstream/, non-fatal on failure
+clone_upstream() {
+    local label="$1" repo="$2" dest="$3"
+    info "Cloning ${label} from ${repo}..."
+    if $DRY_RUN; then
+        run "git clone $(git_url "${repo}") ${dest}"
+        return 0
+    elif git clone "$(git_url "${repo}")" "${dest}" 2>/dev/null; then
+        ok "${label} cloned"
+        return 0
+    else
+        warn "Failed to clone ${label} repo (${repo}). Skipping."
+        warn "You can clone it manually later into ${dest}"
+        return 1
+    fi
+}
+
 # ─── Detect git protocol ─────────────────────────────────────────────────────
 if [[ -z "$GIT_PROTOCOL" ]]; then
-    if command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1; then
+    if command -v gh &>/dev/null && gh auth status &>/dev/null; then
         GIT_PROTOCOL=$(gh config get git_protocol 2>/dev/null || echo "https")
     else
         GIT_PROTOCOL="https"
@@ -124,20 +167,20 @@ info "Git protocol: $GIT_PROTOCOL"
 
 # ─── GitHub-only mode ─────────────────────────────────────────────────────────
 if $GITHUB_ONLY; then
-    if [[ ! -d "$TARGET_DIR" ]]; then
-        err "Directory '$TARGET_DIR' does not exist. Run without --github-only first."
+    if [[ ! -d "$REPO_NAME" ]]; then
+        err "Directory '$REPO_NAME' does not exist. Run without --github-only first."
         exit 1
     fi
 
-    if ! command -v gh &>/dev/null || ! gh auth status &>/dev/null 2>&1; then
+    if ! command -v gh &>/dev/null || ! gh auth status &>/dev/null; then
         err "GitHub CLI (gh) is required for --github-only. Run 'gh auth login' first."
         exit 1
     fi
 
-    cd "$TARGET_DIR"
+    cd "$REPO_NAME"
     info "Creating GitHub repo ${INSTANCE_REPO}..."
 
-    if gh repo view "$INSTANCE_REPO" &>/dev/null 2>&1; then
+    if gh repo view "$INSTANCE_REPO" &>/dev/null; then
         warn "GitHub repo ${INSTANCE_REPO} already exists"
     else
         if ! gh repo create "$INSTANCE_REPO" --private --description "DCA instance for ${PROJECT}"; then
@@ -165,8 +208,8 @@ if $GITHUB_ONLY; then
 fi
 
 # ─── Preflight checks ────────────────────────────────────────────────────────
-if [[ -d "$TARGET_DIR" ]]; then
-    err "Directory '$TARGET_DIR' already exists. Aborting."
+if [[ -d "$REPO_NAME" ]]; then
+    err "Directory '$REPO_NAME' already exists. Aborting."
     exit 1
 fi
 
@@ -175,9 +218,8 @@ if ! command -v git &>/dev/null; then
     exit 1
 fi
 
-# Check gh availability (optional — used for repo creation)
 HAS_GH=false
-if command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1; then
+if command -v gh &>/dev/null && gh auth status &>/dev/null; then
     HAS_GH=true
     ok "GitHub CLI authenticated"
 else
@@ -185,27 +227,14 @@ else
     warn "Repo creation will be skipped — create it manually on GitHub."
 fi
 
-# ─── Detect host OS ──────────────────────────────────────────────────────────
-detect_os() {
-    case "$(uname -s)" in
-        MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
-        Darwin*)               echo "mac" ;;
-        *)                     echo "linux" ;;
-    esac
-}
-
-HOST_OS=$(detect_os)
 info "Detected host OS: $HOST_OS"
 
 # ─── Resolve bind mount ──────────────────────────────────────────────────────
-HOST_PATH=""
 if [[ "$MOUNT_MODE" == "path" ]]; then
-    HOST_PATH="$MOUNT_PATH"
-    info "Bind mount: ${HOST_PATH} → /workspace/src/${PROJECT}/"
+    info "Bind mount: ${MOUNT_PATH} → /workspace/src/${PROJECT}/"
 elif [[ "$MOUNT_MODE" == "none" ]]; then
     info "Skipping bind mount"
 else
-    # Interactive prompt
     echo ""
     echo -e "${CYAN}Bind mount setup${NC}"
     echo "A bind mount maps a host directory into /workspace/src/${PROJECT}/"
@@ -220,74 +249,40 @@ else
         else
             DEFAULT_PATH="${HOME}/git/${PROJECT}"
         fi
-        read -rp "Host path to project source [${DEFAULT_PATH}]: " HOST_PATH
-        HOST_PATH="${HOST_PATH:-$DEFAULT_PATH}"
-        info "Bind mount: ${HOST_PATH} → /workspace/src/${PROJECT}/"
+        read -rp "Host path to project source [${DEFAULT_PATH}]: " MOUNT_PATH
+        MOUNT_PATH="${MOUNT_PATH:-$DEFAULT_PATH}"
+        MOUNT_MODE="path"
+        info "Bind mount: ${MOUNT_PATH} → /workspace/src/${PROJECT}/"
     fi
 fi
 
 # ─── Step 1: Clone template ──────────────────────────────────────────────────
 echo ""
-info "Cloning template repo ${TEMPLATE_REPO} into ${TARGET_DIR}..."
-run "git clone $(git_url "$TEMPLATE_REPO") '${TARGET_DIR}'"
+info "Cloning template repo ${TEMPLATE_REPO} into ${REPO_NAME}..."
+run "git clone $(git_url "$TEMPLATE_REPO") '${REPO_NAME}'"
 
 if ! $DRY_RUN; then
-    cd "$TARGET_DIR"
+    cd "$REPO_NAME"
 else
-    info "Would cd into ${TARGET_DIR}"
+    info "Would cd into ${REPO_NAME}"
 fi
 
 # ─── Step 2: Set up agents and commands (non-fatal) ───────────────────────────
 echo ""
-info "Setting up Claude Code agents and commands in .claude/_upstream/..."
+info "Setting up Claude Code agents and commands..."
 
 run "mkdir -p .claude/_upstream"
 
 AGENTS_OK=false
-info "Cloning agents..."
-if $DRY_RUN; then
-    run "git clone $(git_url "${ORG}/claude_code_agents") .claude/_upstream/agents-repo"
-    info "Would add upstream remote for agents"
-    AGENTS_OK=true
-elif git clone "$(git_url "${ORG}/claude_code_agents")" .claude/_upstream/agents-repo 2>/dev/null; then
-    cd .claude/_upstream/agents-repo
-    git remote add upstream "$(git_url "wshobson/agents")" 2>/dev/null || true
-    cd ../../..
-    AGENTS_OK=true
-    ok "Agents cloned"
-else
-    warn "Failed to clone agents repo (${ORG}/claude_code_agents). Skipping."
-    warn "You can clone it manually later into .claude/_upstream/agents-repo"
-fi
+clone_upstream "agents" "$AGENTS_REPO" ".claude/_upstream/agents-repo" && AGENTS_OK=true
 
 COMMANDS_OK=false
-info "Cloning commands..."
-if $DRY_RUN; then
-    run "git clone $(git_url "${ORG}/claude_code_commands") .claude/_upstream/commands-repo"
-    info "Would add upstream remote for commands"
-    COMMANDS_OK=true
-elif git clone "$(git_url "${ORG}/claude_code_commands")" .claude/_upstream/commands-repo 2>/dev/null; then
-    cd .claude/_upstream/commands-repo
-    git remote add upstream "$(git_url "wshobson/commands")" 2>/dev/null || true
-    cd ../../..
-    COMMANDS_OK=true
-    ok "Commands cloned"
-else
-    warn "Failed to clone commands repo (${ORG}/claude_code_commands). Skipping."
-    warn "You can clone it manually later into .claude/_upstream/commands-repo"
-fi
+clone_upstream "commands" "$COMMANDS_REPO" ".claude/_upstream/commands-repo" && COMMANDS_OK=true
 
-# Set up symlinks (only for repos that were cloned)
 if ! $DRY_RUN; then
-    if $AGENTS_OK; then
-        ln -sfn _upstream/agents-repo .claude/agents
-    fi
-    if $COMMANDS_OK; then
-        ln -sfn _upstream/commands-repo .claude/commands
-    fi
-    if $AGENTS_OK || $COMMANDS_OK; then
-        ok "Symlinks created"
-    fi
+    $AGENTS_OK && ln -sfn _upstream/agents-repo .claude/agents
+    $COMMANDS_OK && ln -sfn _upstream/commands-repo .claude/commands
+    ($AGENTS_OK || $COMMANDS_OK) && ok "Symlinks created"
 else
     info "Would create symlinks: .claude/agents → _upstream/agents-repo, .claude/commands → _upstream/commands-repo"
 fi
@@ -300,40 +295,27 @@ echo ""
 info "Updating devcontainer.json..."
 
 if ! $DRY_RUN; then
-    DEVCONTAINER=".devcontainer/devcontainer.json"
+    DC=".devcontainer/devcontainer.json"
 
-    # Update container name and volume suffixes
-    if [[ "$HOST_OS" == "mac" ]]; then
-        sed -i '' "s/\"name\": \".*\"/\"name\": \"DCA: ${PROJECT}\"/" "$DEVCONTAINER"
-        sed -i '' "s/\"source=claude-code-bashhistory,/\"source=claude-code-bashhistory-${PROJECT},/" "$DEVCONTAINER"
-        sed -i '' "s/\"source=claude-code-config,/\"source=claude-code-config-${PROJECT},/" "$DEVCONTAINER"
-    else
-        sed -i "s/\"name\": \".*\"/\"name\": \"DCA: ${PROJECT}\"/" "$DEVCONTAINER"
-        sed -i "s/\"source=claude-code-bashhistory,/\"source=claude-code-bashhistory-${PROJECT},/" "$DEVCONTAINER"
-        sed -i "s/\"source=claude-code-config,/\"source=claude-code-config-${PROJECT},/" "$DEVCONTAINER"
-    fi
+    sedi \
+        -e "s/\"name\": \".*\"/\"name\": \"DCA: ${PROJECT}\"/" \
+        -e "s/\"source=claude-code-bashhistory,/\"source=claude-code-bashhistory-${PROJECT},/" \
+        -e "s/\"source=claude-code-config,/\"source=claude-code-config-${PROJECT},/" \
+        "$DC"
 
-    # Add bind mount if requested
-    if [[ -n "$HOST_PATH" ]]; then
-        MOUNT_LINE="    \"source=${HOST_PATH},target=/workspace/src/${PROJECT},type=bind,consistency=delegated\""
-
-        if [[ "$HOST_OS" == "mac" ]]; then
-            sed -i '' "/\"source=claude-code-config/a\\
-${MOUNT_LINE}" "$DEVCONTAINER"
-            sed -i '' "s|\"source=claude-code-config-${PROJECT},target=/home/node/.claude,type=volume\"|\"source=claude-code-config-${PROJECT},target=/home/node/.claude,type=volume\",|" "$DEVCONTAINER"
-        else
-            sed -i "/\"source=claude-code-config/a\\
-${MOUNT_LINE}" "$DEVCONTAINER"
-            sed -i "s|\"source=claude-code-config-${PROJECT},target=/home/node/.claude,type=volume\"|\"source=claude-code-config-${PROJECT},target=/home/node/.claude,type=volume\",|" "$DEVCONTAINER"
-        fi
+    if [[ -n "$MOUNT_PATH" && "$MOUNT_MODE" == "path" ]]; then
+        MOUNT_LINE="    \"source=${MOUNT_PATH},target=/workspace/src/${PROJECT},type=bind,consistency=delegated\""
+        sedi "/\"source=claude-code-config/a\\
+${MOUNT_LINE}" "$DC"
+        sedi "s|\"source=claude-code-config-${PROJECT},target=/home/node/.claude,type=volume\"|\"source=claude-code-config-${PROJECT},target=/home/node/.claude,type=volume\",|" "$DC"
     fi
 
     ok "devcontainer.json updated"
 else
     info "Would update container name to 'DCA: ${PROJECT}'"
     info "Would update volume mount suffixes with '${PROJECT}'"
-    if [[ -n "$HOST_PATH" ]]; then
-        info "Would add bind mount: ${HOST_PATH} → /workspace/src/${PROJECT}/"
+    if [[ "$MOUNT_MODE" == "path" ]]; then
+        info "Would add bind mount: ${MOUNT_PATH} → /workspace/src/${PROJECT}/"
     fi
 fi
 
@@ -345,14 +327,14 @@ if ! $DRY_RUN; then
     cat > README.md <<READMEEOF
 # DCA_${PROJECT}
 
-Development container instance for **${PROJECT}**, created from the [DevCon_claude](https://github.com/${ORG}/DevCon_claude) template.
+Development container instance for **${PROJECT}**, created from the [DevCon_claude](https://github.com/${TEMPLATE_REPO}) template.
 
 ## Remotes
 
 | Remote   | Repository                                                                  |
 |----------|-----------------------------------------------------------------------------|
 | origin   | [${ORG}/${REPO_NAME}](https://github.com/${INSTANCE_REPO})                 |
-| upstream | [${ORG}/DevCon_claude](https://github.com/${TEMPLATE_REPO})                |
+| upstream | [${TEMPLATE_REPO}](https://github.com/${TEMPLATE_REPO})                    |
 
 ## Quick Start
 
@@ -392,7 +374,7 @@ if $HAS_GH; then
     info "Setting up GitHub repo ${INSTANCE_REPO}..."
 
     if ! $DRY_RUN; then
-        if gh repo view "$INSTANCE_REPO" &>/dev/null 2>&1; then
+        if gh repo view "$INSTANCE_REPO" &>/dev/null; then
             warn "GitHub repo ${INSTANCE_REPO} already exists, skipping creation"
         else
             info "Creating GitHub repo ${INSTANCE_REPO}..."
@@ -408,9 +390,6 @@ if $HAS_GH; then
     fi
 else
     warn "Skipping GitHub repo creation (gh not available)"
-    warn "Create it manually, then push:"
-    warn "  gh repo create ${INSTANCE_REPO} --private"
-    warn "  git push -u origin master"
 fi
 
 # ─── Step 7: Configure git remotes ───────────────────────────────────────────
@@ -440,7 +419,7 @@ if ! $DRY_RUN; then
 - Set container name to DCA: ${PROJECT}
 - Configure project-specific volume mounts
 - Write project README
-$([ -n "$HOST_PATH" ] && echo "- Add bind mount: ${HOST_PATH} → /workspace/src/${PROJECT}/")"
+$([ "$MOUNT_MODE" == "path" ] && echo "- Add bind mount: ${MOUNT_PATH} → /workspace/src/${PROJECT}/")"
 
     if $HAS_GH; then
         info "Pushing to origin..."
@@ -466,7 +445,7 @@ echo "  Repository: https://github.com/${INSTANCE_REPO}"
 echo "  Local dir:  $(pwd)"
 echo ""
 echo "  Next steps:"
-echo "    1. Open ${TARGET_DIR}/ in VS Code"
+echo "    1. Open ${REPO_NAME}/ in VS Code"
 echo "    2. Reopen in container"
 echo "    3. Start working in /workspace/src/${PROJECT}/"
 echo ""

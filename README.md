@@ -10,7 +10,8 @@ Based on [Anthropic's Claude Code example](https://github.com/anthropics/claude-
 
 One-liner (no need to clone the template first):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aiwonglab/DevCon_claude/master/.devcontainer/setup_project.sh | bash -s -- <project-name>
+curl -fsSL https://raw.githubusercontent.com/aiwonglab/DevCon_claude/master/.devcontainer/setup_project.sh \
+  | bash -s -- <project-name>
 ```
 
 Or if you already have the repo cloned:
@@ -23,7 +24,7 @@ This clones DevCon_claude, then configures it as a standalone instance:
 - Creates GitHub repo `<org>/DCA_<project>` (private, requires `gh`)
 - Sets container name to `DCA: <project>` with isolated volumes
 - Optionally adds a bind mount for host project source
-- Clones Claude Code agents and commands with upstream tracking
+- Clones Claude Code agents and commands from [wshobson/agents](https://github.com/wshobson/agents) and [wshobson/commands](https://github.com/wshobson/commands)
 - Sets git remotes: `origin` → instance repo, `upstream` → this template
 - Commits and pushes the initial configuration
 
@@ -35,14 +36,18 @@ bash setup_project.sh <project-name> --github-only
 ### Examples
 
 ```bash
-# Create DCA_praxis with defaults (org: aiwonglab)
+# Create DCA_praxis with defaults
 bash .devcontainer/setup_project.sh praxis
 
 # Non-interactive with bind mount
 bash .devcontainer/setup_project.sh praxis --mount C:/git/praxis
 
-# No bind mount, SSH remotes
-bash .devcontainer/setup_project.sh praxis --no-mount --ssh
+# Different org
+bash .devcontainer/setup_project.sh praxis --org other-org
+
+# Use custom agent/command forks instead of wshobson defaults
+bash .devcontainer/setup_project.sh praxis \
+  --agents myorg/my-agents --commands myorg/my-commands
 
 # Preview what would happen
 bash .devcontainer/setup_project.sh praxis --dry-run
@@ -59,14 +64,14 @@ git fetch upstream master
 git merge upstream/master
 ```
 
-### For Existing Projects (Migration)
+### Migrating Existing Projects
 
 ```bash
 cd /path/to/existing/workspace
 bash .devcontainer/migrate_to_aiwonglab.sh
 ```
 
-See [MIGRATION.md](.devcontainer/MIGRATION.md) for details.
+See [MIGRATION.md](.devcontainer/MIGRATION.md) for details. (Legacy migration script — may need updating for your org.)
 
 ## Repository Structure
 
@@ -74,7 +79,7 @@ See [MIGRATION.md](.devcontainer/MIGRATION.md) for details.
 /workspace/
 ├── .devcontainer/
 │   ├── setup_project.sh        # Instance creation script
-│   ├── migrate_to_aiwonglab.sh # Migration script for legacy setups
+│   ├── migrate_to_aiwonglab.sh # Legacy migration script
 │   └── MIGRATION.md
 ├── .claude/
 │   ├── _upstream/         # Git-ignored; agent/command sub-repo clones
@@ -105,22 +110,17 @@ Benefits:
 
 ### Agents and Commands
 
-Uses forked repositories with upstream tracking:
+By default, agents and commands are cloned from:
 
-- **Origin**: `aiwonglab/claude_code_agents` and `aiwonglab/claude_code_commands` (your forks)
-- **Upstream**: `wshobson/agents` and `wshobson/commands` (originals)
+- [wshobson/agents](https://github.com/wshobson/agents)
+- [wshobson/commands](https://github.com/wshobson/commands)
 
-Sync upstream updates:
-```bash
-/workflows:sync-upstream
-```
+Use `--agents` and `--commands` flags to point to your own forks.
 
-Or manually:
+Sync updates:
 ```bash
 cd .claude/_upstream/agents-repo
-git fetch upstream
-git merge upstream/main
-git push origin main
+git pull origin main
 ```
 
 ## Key Features
@@ -171,9 +171,10 @@ Templates automatically run:
 ## Technology Stack
 
 - **Python**: Managed with `uv` (fast, modern package manager)
+- **R**: Planned via `pixi` (multi-language package manager) — not yet supported
 - **Git**: Infrastructure and research repos managed independently
 - **Docker**: DevContainer for consistent environments
-- **Claude Code**: AI-powered development with specialized agents
+- **Claude Code**: Development with specialized agents and slash commands
 
 ## Workflows
 
@@ -212,10 +213,8 @@ Research projects should live in their own repositories.
 
 ## Related Repositories
 
-- **Agents**: [aiwonglab/claude_code_agents](https://github.com/aiwonglab/claude_code_agents) (fork of wshobson/agents)
-- **Commands**: [aiwonglab/claude_code_commands](https://github.com/aiwonglab/claude_code_commands) (fork of wshobson/commands)
-- **Upstream Agents**: [wshobson/agents](https://github.com/wshobson/agents)
-- **Upstream Commands**: [wshobson/commands](https://github.com/wshobson/commands)
+- **Agents**: [wshobson/agents](https://github.com/wshobson/agents) — Claude Code agent definitions
+- **Commands**: [wshobson/commands](https://github.com/wshobson/commands) — Claude Code slash commands
 
 ## License
 
